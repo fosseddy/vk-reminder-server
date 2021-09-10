@@ -19,8 +19,6 @@ if (!PORT || !VK_GROUP_ID || !VK_TOKEN) {
 const server = http.serve({ port: PORT });
 
 for await (const req of server) {
-    console.log(req.url)
-    console.log(req.method)
     if (req.url !== "/messages" || req.method !== "POST") {
         const body = `
         <pre>
