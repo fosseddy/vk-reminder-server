@@ -19,6 +19,8 @@ if (!PORT || !VK_GROUP_ID || !VK_TOKEN) {
 const server = http.serve({ port: PORT });
 
 for await (const req of server) {
+    console.log(req.url)
+    console.log(req.method)
     if (req.url !== "/messages" || req.method !== "POST") {
         const body = `
         <pre>
@@ -44,5 +46,14 @@ for await (const req of server) {
 
     res = await res.json();
 
-    req.respond({ body: JSON.stringify(res) });
+    const h = new Headers();
+    h.append("Content-Type", "application/json");
+    h.append("Access-Control-Allow-Origin", "*");
+
+    req.respond({
+        status: 200,
+        statusText: "OK",
+        headers: h,
+        body: JSON.stringify(res)
+    });
 }
