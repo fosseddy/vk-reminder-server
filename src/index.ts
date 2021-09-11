@@ -32,26 +32,56 @@ for await (const req of server) {
         continue;
     }
 
+    const headers = new Headers({
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+    });
+
     const bytes = await io.readAll(req.body);
     const str = new TextDecoder().decode(bytes);
-    const body: { id: string } = JSON.parse(str);
 
-    let res = await fetch(
+    let body: { id?: string } = {};
+    try {
+        body = JSON.parse(str);
+    } catch (_) {}
+
+    if (!body.id) {
+        req.respond({
+            status: 400,
+            statusText: "Bad Request",
+            headers,
+            body: JSON.stringify({
+                error: { message: "No user id was provided" }
+            })
+        });
+        continue;
+    }
+
+    const res = await fetch(
         `https://api.vk.com/method/messages.isMessagesFromGroupAllowed?` +
         `group_id=${VK_GROUP_ID}&user_id=${body.id}&` +
         `access_token=${VK_TOKEN}&v=5.126`
     );
+    const data = await res.json();
+    if (data.error) {
+        req.respond({
+            status: 400,
+            statusText: "Bad Request",
+            headers,
+            body: JSON.stringify({
+                error: { message: data.error.error_msg }
+            })
+        });
+        continue;
+    }
 
-    res = await res.json();
-
-    const h = new Headers();
-    h.append("Content-Type", "application/json");
-    h.append("Access-Control-Allow-Origin", "*");
-
+    const isAllowed = data.response.is_allowed > 0;
     req.respond({
         status: 200,
         statusText: "OK",
-        headers: h,
-        body: JSON.stringify(res)
+        headers,
+        body: JSON.stringify({
+            data: { isAllowed }
+        })
     });
 }
