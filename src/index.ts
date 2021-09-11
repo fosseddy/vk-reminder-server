@@ -8,8 +8,8 @@ for (const line of envFile.trim().split("\n")) {
 }
 
 const PORT = Number(Deno.env.get("PORT"));
-const VK_GROUP_ID = Deno.env.get("VK_GROUP_ID");
 const VK_TOKEN = Deno.env.get("VK_TOKEN");
+const VK_GROUP_ID = "202435034";
 
 if (!PORT || !VK_GROUP_ID || !VK_TOKEN) {
     console.error("env vars are not provided");
@@ -58,7 +58,7 @@ for await (const req of server) {
     }
 
     const res = await fetch(
-        `https://api.vk.com/method/messages.isMessagesFromGroupAllowed?` +
+        "https://api.vk.com/method/messages.isMessagesFromGroupAllowed?" +
         `group_id=${VK_GROUP_ID}&user_id=${body.id}&` +
         `access_token=${VK_TOKEN}&v=5.126`
     );
