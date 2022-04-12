@@ -1,0 +1,14 @@
+{
+	"name": "vk-reminder-server",
+	"version": "1.0.0",
+	"main": "index.mjs",
+	"scripts": {
+		"dev": "node index.mjs"
+	},
+	"imports": {
+		"#src/*": "./src/*"
+	},
+	"dependencies": {
+		"express": "^4.17.3"
+	}
+}
