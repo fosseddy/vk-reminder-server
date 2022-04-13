@@ -1,16 +1,16 @@
 {
-	"name": "vk-reminder-server",
-	"version": "1.0.0",
-	"main": "index.mjs",
-	"scripts": {
-		"dev": "node index.mjs"
-	},
-	"imports": {
-		"#src/*": "./src/*"
-	},
-	"dependencies": {
-		"cors": "^2.8.5",
-		"express": "^4.17.3",
-		"node-fetch": "^3.2.3"
-	}
+  "name": "vk-reminder-server",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "scripts": {
+    "dev": "node index.mjs"
+  },
+  "imports": {
+    "#src/*": "./src/*"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.3",
+    "node-fetch": "^3.2.3"
+  }
 }
