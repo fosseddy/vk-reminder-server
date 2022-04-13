@@ -12,14 +12,14 @@ app.post("/api/check-messages", async (req, res) => {
   const { session } = req.body;
   if (!session) {
     return res.status(401).json({
-      error: { code: 401, message: "unauthorized" }
+      error: { message: "unauthorized" }
     });
   }
 
   const { expire, mid, secret, sid, sig } = session;
   if (!expire || !mid || !secret || !sid || !sig) {
     return res.status(401).json({
-      error: { code: 401, message: "unauthorized" }
+      error: { message: "unauthorized" }
     });
   }
 
@@ -32,14 +32,14 @@ app.post("/api/check-messages", async (req, res) => {
 
   if (sig !== signature) {
     return res.status(401).json({
-      error: { code: 401, message: "unauthorized" }
+      error: { message: "unauthorized" }
     });
   }
 
   const { userId } = req.body;
   if (!userId) {
     return res.status(400).json({
-      error: { code: 400, message: "invalid data" }
+      error: { message: "invalid data" }
     });
   }
 
@@ -47,14 +47,14 @@ app.post("/api/check-messages", async (req, res) => {
   if (err) {
     console.error(err);
     return res.status(500).json({
-      error: { code: 500, message: "server error" }
+      error: { message: "server error" }
     });
   }
 
   if (data.error) {
     console.error(data.error);
     return res.status(400).json({
-      error: { code: 400, message: "invalid data" }
+      error: { message: "invalid data" }
     });
   }
 
