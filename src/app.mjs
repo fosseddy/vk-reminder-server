@@ -43,19 +43,32 @@ app.post("/api/check-messages", async (req, res) => {
 		});
 	}
 
-	const data = await fetch(
-		"https://api.vk.com/method/messages.isMessagesFromGroupAllowed?" +
-		`group_id=${process.env.VK_GROUP_ID}&` +
-		`user_id=${userId}&` +
-		`access_token=${process.env.VK_TOKEN}&` +
-		`v=${process.env.VK_API_VER}`
-	);
+	try {
+		const r = await fetch(
+			"https://api.vk.com/method/messages.isMessagesFromGroupAllowed?" +
+			`group_id=${process.env.VK_GROUP_ID}&` +
+			`user_id=${userId}&` +
+			`access_token=${process.env.VK_TOKEN}&` +
+			`v=${process.env.VK_API_VER}`
+		);
 
-	const { response } = await data.json();
-	
-	return res.status(200).json({
-		data: { isAllowed: !!response.is_allowed }
-	});
+		const data = await r.json();
+		if (data.error) {
+			console.error(data.error);
+			return res.status(400).json({
+				error: { code: 400, message: "invalid data" }
+			});
+		}
+		
+		return res.status(200).json({
+			data: { isAllowed: !!data.response.is_allowed }
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({
+			error: { code: 500, message: "server error" }
+		});
+	}
 });
 
 export { app };
