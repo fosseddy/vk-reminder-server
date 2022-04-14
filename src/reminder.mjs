@@ -26,8 +26,8 @@ const Reminder = mongoose.model("Reminder", ReminderSchema);
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  // @TODO(art): validate session
   try {
+    const { userId } = req.session;
     const items = await Reminder.find({ userId });
     return res.status(200).json({
       data: { items }
