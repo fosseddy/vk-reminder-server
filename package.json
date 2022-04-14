@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.mjs",
   "scripts": {
-    "dev": "node index.mjs"
+    "start": "node index.mjs",
+    "dev": "nodemon index.mjs"
   },
   "imports": {
     "#src/*": "./src/*"
@@ -11,6 +12,10 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.3",
+    "mongoose": "^6.2.11",
     "node-fetch": "^3.2.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
   }
 }
