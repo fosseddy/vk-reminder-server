@@ -1,3 +1,4 @@
+import express from "express";
 import mongoose from "mongoose";
 
 const ReminderSchema = new mongoose.Schema({
@@ -22,4 +23,20 @@ const ReminderSchema = new mongoose.Schema({
 
 const Reminder = mongoose.model("Reminder", ReminderSchema);
 
-export { Reminder };
+const router = express.Router();
+
+router.get("/", async (req, res) => {
+  // @TODO(art): validate session
+  try {
+    const items = await Reminder.find({ userId });
+    return res.status(200).json({
+      data: { items }
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: { code: 500, message: "server error" }
+    });
+  }
+});
+
+export { Reminder, router };

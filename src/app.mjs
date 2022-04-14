@@ -2,11 +2,14 @@ import express from "express";
 import crypto from "crypto";
 import fetch from "node-fetch";
 import cors from "cors";
+import * as reminder from "#src/reminder.mjs";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/reminder", reminder.router);
 
 app.post("/api/check-messages", async (req, res) => {
   const { session } = req.body;
