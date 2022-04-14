@@ -1,7 +1,7 @@
 import express from "express";
-import crypto from "crypto";
 import fetch from "node-fetch";
 import cors from "cors";
+import { session } from "#src/vk-session.mjs";
 import * as reminder from "#src/reminder.mjs";
 
 const app = express();
@@ -9,44 +9,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use(session);
+
 app.use("/api/reminder", reminder.router);
 
 app.post("/api/check-messages", async (req, res) => {
-  const { session } = req.body;
-  if (!session) {
-    return res.status(401).json({
-      error: { message: "unauthorized" }
-    });
-  }
-
-  const { expire, mid, secret, sid, sig } = session;
-  if (!expire || !mid || !secret || !sid || !sig) {
-    return res.status(401).json({
-      error: { message: "unauthorized" }
-    });
-  }
-
-  const signature = crypto.createHash("md5")
-    .update(
-      `expire=${expire}mid=${mid}secret=${secret}` +
-      `sid=${sid}${process.env.VK_APP_SECRET}`
-    )
-    .digest("hex");
-
-  if (sig !== signature) {
-    return res.status(401).json({
-      error: { message: "unauthorized" }
-    });
-  }
-
-  const { userId } = req.body;
-  if (!userId) {
-    return res.status(400).json({
-      error: { message: "invalid data" }
-    });
-  }
-
+  const { userId } = req.session;
   const [data, err] = await isMessagesFromGroupAllowed(userId);
+
   if (err) {
     console.error(err);
     return res.status(500).json({
