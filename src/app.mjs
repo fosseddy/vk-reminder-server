@@ -13,43 +13,44 @@ app.use(session);
 
 app.use("/api/reminder", reminder.router);
 
-app.post("/api/check-messages", async (req, res) => {
+// @TODO(art): make it GET request
+app.post("/api/check-messages", asyncErr(async (req, res) => {
   const { userId } = req.session;
-  const [data, err] = await isMessagesFromGroupAllowed(userId);
 
-  if (err) {
-    console.error(err);
-    return res.status(500).json({
-      error: { message: "server error" }
-    });
-  }
+  const r = await fetch(
+    "https://api.vk.com/method/messages.isMessagesFromGroupAllowed?" +
+    `group_id=${process.env.VK_GROUP_ID}&` +
+    `user_id=${userId+"A"}&` +
+    `access_token=${process.env.VK_TOKEN}&` +
+    `v=${process.env.VK_API_VER}`
+  );
+
+  const data = await r.json();
 
   if (data.error) {
-    console.error(data.error);
-    return res.status(400).json({
-      error: { message: "invalid data" }
-    });
+    throw { code: 400, message: "invalid data" }
   }
 
   return res.status(200).json({
     data: { allowed: !!data.response.is_allowed }
   });
+}));
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err)
+  }
+
+  let error = err.code
+    ? err
+    : { code: 500, message: "server error" };
+
+  return res.status(error.code).json({ error });
 });
 
-async function isMessagesFromGroupAllowed(userId) {
-  try {
-    const res = await fetch(
-      "https://api.vk.com/method/messages.isMessagesFromGroupAllowed?" +
-      `group_id=${process.env.VK_GROUP_ID}&` +
-      `user_id=${userId}&` +
-      `access_token=${process.env.VK_TOKEN}&` +
-      `v=${process.env.VK_API_VER}`
-    );
-
-    const data = await res.json();
-    return [data, null];
-  } catch (err) {
-    return [null, err];
+function asyncErr(fn) {
+  return function(req, res, next) {
+    fn(req, res, next).catch(next);
   }
 }
 
