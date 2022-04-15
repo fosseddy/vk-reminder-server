@@ -65,33 +65,19 @@ router.post("/", async (req, res, next) => {
   return res.status(201).json({ data: r });
 });
 
-router.put("/:id(\\d+)", async (req, res, next) => {
+router.put("/:id(\\d+)", findReminder, async (req, res, next) => {
   const { text, date } = req.body;
-  const { userId } = req.session;
 
   if (!text || !date) {
     return res.status(400).json(error.BadRequest);
   }
 
-  let err = null;
-  let r = await Reminder.findById(id).catch(e => err = e);
-
-  if (err) {
-    return next(err);
-  }
-
-  if (!r) {
-    return res.status(400).json(error.BadRequest);
-  }
-
-  if (r.userId !== userId) {
-    return res.status(403).json(error.Forbidden);
-  }
+  let { reminder: r } = req;
 
   r.text = text;
   r.date = date;
 
-  err = null;
+  let err = null;
   r = await r.save().catch(e => err = e);
 
   if (err) {
@@ -106,25 +92,10 @@ router.put("/:id(\\d+)", async (req, res, next) => {
   return res.status(200).json({ data: r });
 });
 
-router.delete("/:id(\\d+)", async (req, res, next) => {
-  const { userId } = req.session;
+router.delete("/:id(\\d+)", findReminder, async (req, res, next) => {
+  const { reminder: r } = req;
 
   let err = null;
-  let r = await Reminder.findById(id).catch(e => err = e);
-
-  if (err) {
-    return next(err);
-  }
-
-  if (!r) {
-    return res.status(400).json(error.BadRequest);
-  }
-
-  if (r.userId !== userId) {
-    return res.status(403).json(error.Forbidden);
-  }
-
-  err = null;
   r = await r.remove().catch(e => err = e);
 
   if (err) {
@@ -136,7 +107,12 @@ router.delete("/:id(\\d+)", async (req, res, next) => {
   return res.status(200).json({ data: r });
 });
 
-router.get("/:id(\\d+)", async (req, res, next) => {
+router.get("/:id(\\d+)", findReminder, async (req, res, next) => {
+  return res.status(200).json({ data: req.reminder });
+});
+
+async function findReminder(req, res, next) {
+  const { id } = req.params;
   const { userId } = req.session;
 
   let err = null;
@@ -154,7 +130,8 @@ router.get("/:id(\\d+)", async (req, res, next) => {
     return res.status(403).json(error.Forbidden);
   }
 
-  return res.status(200).json({ data: r });
-});
+  req.reminder = r;
+  return next();
+}
 
 export { Reminder, router };
