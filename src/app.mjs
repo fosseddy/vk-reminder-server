@@ -36,7 +36,7 @@ app.get("/api/check-messages", async (req, res, next) => {
   }
 
   if (data.error) {
-    return res.status(400).json(error.BadRequest());
+    return res.status(400).json(error.BadRequest);
   }
 
   return res.status(200).json({

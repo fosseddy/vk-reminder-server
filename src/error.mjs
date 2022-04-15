@@ -1,38 +1,14 @@
-function BadRequest(msg) {
+function createError(opts) {
+  const { code, message } = opts;
   return {
-    error: {
-      code: 400,
-      message: msg ?? "invalid data"
-    }
+    error: { code, message }
   };
-};
+}
 
-function ServerError(msg) {
-  return {
-    error: {
-      code: 500,
-      message: msg ?? "server error"
-    }
-  };
-};
-
-function NotFound(msg) {
-  return {
-    error: {
-      code: 404,
-      message: msg ?? "not found"
-    }
-  };
-};
-
-function NotAuthorized(msg) {
-  return {
-    error: {
-      code: 401,
-      message: msg ?? "not authorized"
-    }
-  };
-};
+const BadRequest = createError({ code: 400, message: "invalid data" });
+const ServerError = createError({ code: 500, message: "server error" });
+const NotFound = createError({ code: 404, message: "not found" });
+const NotAuthorized = createError({ code: 401, message: "not authorized" });
 
 function globalHandler(err, req, res, next) {
   if (res.headersSent) {
@@ -41,7 +17,7 @@ function globalHandler(err, req, res, next) {
 
   console.error(err);
 
-  return res.status(500).json(ServerError());
+  return res.status(500).json(ServerError);
 }
 
 export {
