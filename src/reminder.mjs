@@ -26,18 +26,135 @@ const Reminder = mongoose.model("Reminder", ReminderSchema);
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  try {
-    const { userId } = req.session;
-    const items = await Reminder.find({ userId });
-    return res.status(200).json({
-      data: { items }
-    });
-  } catch (err) {
-    return res.status(500).json({
-      error: { code: 500, message: "server error" }
-    });
+router.get("/", async (req, res, next) => {
+  const { userId } = req.session;
+
+  let err = null;
+  const items = await Reminder.find({ userId }).catch(e => err = e);
+
+  if (err) {
+    return next(err);
   }
+
+  return res.status(200).json({
+    data: { items }
+  });
+});
+
+router.post("/", async (req, res, next) => {
+  const { text, date } = req.body;
+  const { userId } = req.session;
+
+  if (!text || !date) {
+    return res.status(400).json(error.BadRequest);
+  }
+
+  let err = null;
+  let r = new Reminder({ userId, text, date });
+  r = await r.save().catch(e => err = e);
+
+  if (err) {
+    if (err instanceof mongoose.Error.ValidationError) {
+      return res.status(400).json(error.BadRequest);
+    }
+    return next(err);
+  }
+
+  // @TODO(art): schedule reminder
+
+  return res.status(201).json({ data: r });
+});
+
+router.put("/:id(\\d+)", async (req, res, next) => {
+  const { text, date } = req.body;
+  const { userId } = req.session;
+
+  if (!text || !date) {
+    return res.status(400).json(error.BadRequest);
+  }
+
+  let err = null;
+  let r = await Reminder.findById(id).catch(e => err = e);
+
+  if (err) {
+    return next(err);
+  }
+
+  if (!r) {
+    return res.status(400).json(error.BadRequest);
+  }
+
+  if (r.userId !== userId) {
+    return res.status(403).json(error.Forbidden);
+  }
+
+  r.text = text;
+  r.date = date;
+
+  err = null;
+  r = await r.save().catch(e => err = e);
+
+  if (err) {
+    if (err instanceof mongoose.Error.ValidationError) {
+      return res.status(400).json(error.BadRequest);
+    }
+    return next(err);
+  }
+
+  // @TODO(art): re-schedule reminder
+
+  return res.status(200).json({ data: r });
+});
+
+router.delete("/:id(\\d+)", async (req, res, next) => {
+  const { userId } = req.session;
+
+  let err = null;
+  let r = await Reminder.findById(id).catch(e => err = e);
+
+  if (err) {
+    return next(err);
+  }
+
+  if (!r) {
+    return res.status(400).json(error.BadRequest);
+  }
+
+  if (r.userId !== userId) {
+    return res.status(403).json(error.Forbidden);
+  }
+
+  err = null;
+  r = await r.remove().catch(e => err = e);
+
+  if (err) {
+    return next(err);
+  }
+
+  // @TODO(art): delete from schedule
+
+  return res.status(200).json({ data: r });
+});
+
+router.get("/:id(\\d+)", async (req, res, next) => {
+  const { userId } = req.session;
+
+  let err = null;
+  const r = await Reminder.findById(id).catch(e => err = e);
+
+  if (err) {
+    return next(err);
+  }
+
+  if (!r) {
+    return res.status(400).json(error.BadRequest);
+  }
+
+  if (r.userId !== userId) {
+    return res.status(403).json(error.Forbidden);
+  }
+
+  return res.status(200).json({ data: r });
 });
 
 export { Reminder, router };

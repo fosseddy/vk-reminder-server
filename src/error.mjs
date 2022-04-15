@@ -9,6 +9,7 @@ const BadRequest = createError({ code: 400, message: "invalid data" });
 const ServerError = createError({ code: 500, message: "server error" });
 const NotFound = createError({ code: 404, message: "not found" });
 const NotAuthorized = createError({ code: 401, message: "not authorized" });
+const Forbidden = createError({ code: 403, message: "forbidden" });
 
 function globalHandler(err, req, res, next) {
   if (res.headersSent) {
