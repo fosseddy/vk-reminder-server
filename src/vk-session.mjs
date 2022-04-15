@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import * as error from "#src/error.mjs";
 
 function parseHeader(h) {
   const session = {};
@@ -33,17 +34,13 @@ function session(req, res, next) {
   const header = req.get("VK-Session");
 
   if (!header) {
-    return res.status(401).json({
-      error: { code: 401, message: "not authorized"}
-    });
+    return res.status(401).json(error.NotAuthorized);
   }
 
   const sess = parseHeader(header);
 
   if (!isValid(sess)) {
-    return res.status(401).json({
-      error: { code: 401, message: "not authorized"}
-    });
+    return res.status(401).json(error.NotAuthorized);
   }
 
   req.session = sess;

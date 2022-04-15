@@ -1,5 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
+import * as error from "#src/error.mjs";
 
 const ReminderSchema = new mongoose.Schema({
   userId: {
