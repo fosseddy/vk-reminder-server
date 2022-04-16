@@ -93,7 +93,7 @@ router.put("/:id", findReminder, async (req, res, next) => {
 });
 
 router.delete("/:id", findReminder, async (req, res, next) => {
-  const { reminder: r } = req;
+  let { reminder: r } = req;
 
   let err = null;
   r = await r.remove().catch(e => err = e);
