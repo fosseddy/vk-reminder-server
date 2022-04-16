@@ -65,7 +65,7 @@ router.post("/", async (req, res, next) => {
   return res.status(201).json({ data: r });
 });
 
-router.put("/:id(\\d+)", findReminder, async (req, res, next) => {
+router.put("/:id", findReminder, async (req, res, next) => {
   const { text, date } = req.body;
 
   if (!text || !date) {
@@ -92,7 +92,7 @@ router.put("/:id(\\d+)", findReminder, async (req, res, next) => {
   return res.status(200).json({ data: r });
 });
 
-router.delete("/:id(\\d+)", findReminder, async (req, res, next) => {
+router.delete("/:id", findReminder, async (req, res, next) => {
   const { reminder: r } = req;
 
   let err = null;
@@ -107,7 +107,7 @@ router.delete("/:id(\\d+)", findReminder, async (req, res, next) => {
   return res.status(200).json({ data: r });
 });
 
-router.get("/:id(\\d+)", findReminder, async (req, res, next) => {
+router.get("/:id", findReminder, async (req, res, next) => {
   return res.status(200).json({ data: req.reminder });
 });
 
