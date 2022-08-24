@@ -9,10 +9,10 @@ import * as reminder from "#src/reminder.mjs";
 export const app = express();
 
 const conn = await mysql.createConnection({
-  host: "127.0.0.1",
-  database: "vkreminder",
-  user: "fosseddy",
-  password: "123"
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS
 }).catch(err => {
   console.error(err);
   process.exit(1);
