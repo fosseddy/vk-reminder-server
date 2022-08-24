@@ -2,7 +2,9 @@ import express from "express";
 import fetch from "node-fetch";
 import * as error from "#src/error.mjs";
 
-const router = express.Router();
+export const router = express.Router();
+
+router.use("/messages", router);
 
 router.get("/check", async (req, res, next) => {
   const { userId } = req.session;
@@ -35,5 +37,3 @@ router.get("/check", async (req, res, next) => {
     data: { allowed: !!data.response.is_allowed }
   });
 });
-
-export { router };

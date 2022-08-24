@@ -30,7 +30,7 @@ function isValid(session) {
   return sig === signature;
 }
 
-function session(req, res, next) {
+export function session(req, res, next) {
   const header = req.get("VK-Session");
 
   if (!header) {
@@ -46,5 +46,3 @@ function session(req, res, next) {
   req.session = sess;
   next();
 }
-
-export { session };

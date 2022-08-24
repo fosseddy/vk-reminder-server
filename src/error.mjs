@@ -1,17 +1,19 @@
-function createError(opts) {
-  const { code, message } = opts;
+function create(opts) {
   return {
-    error: { code, message }
+    error: {
+      code: opts.code,
+      message: opts.message
+    }
   };
 }
 
-const BadRequest = createError({ code: 400, message: "invalid data" });
-const ServerError = createError({ code: 500, message: "server error" });
-const NotFound = createError({ code: 404, message: "not found" });
-const NotAuthorized = createError({ code: 401, message: "not authorized" });
-const Forbidden = createError({ code: 403, message: "forbidden" });
+export const BadRequest = create({ code: 400, message: "invalid data" });
+export const ServerError = create({ code: 500, message: "server error" });
+export const NotFound = create({ code: 404, message: "not found" });
+export const NotAuthorized = create({ code: 401, message: "not authorized" });
+export const Forbidden = create({ code: 403, message: "forbidden" });
 
-function globalHandler(err, req, res, next) {
+export function globalHandler(err, req, res, next) {
   if (res.headersSent) {
     return next(err);
   }
@@ -20,11 +22,3 @@ function globalHandler(err, req, res, next) {
 
   return res.status(500).json(ServerError);
 }
-
-export {
-  BadRequest,
-  ServerError,
-  NotAuthorized,
-  NotFound,
-  globalHandler
-};

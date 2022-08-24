@@ -1,102 +1,96 @@
 import express from "express";
-import mongoose from "mongoose";
 import * as error from "#src/error.mjs";
 
-const ReminderSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    trim: true,
-    required: true
-  },
+export const router = express.Router();
 
-  text: {
-    type: String,
-    trim: true,
-    required: true
-  },
-
-  date: {
-    type: Date,
-    min: Date.now,
-    required: true
-  }
-}, { timestamps: true });
-
-const Reminder = mongoose.model("Reminder", ReminderSchema);
-
-const router = express.Router();
+router.use("/reminder", router);
 
 router.get("/", async (req, res, next) => {
   const { userId } = req.session;
+  const db = req.app.get("db");
 
   let err = null;
-  const items = await Reminder.find({ userId }).catch(e => err = e);
+  const [rows] = await db.execute(
+    "select * from reminder where user_id = ?",
+    [userId]
+  ).catch(e => err = e);
 
   if (err) {
     return next(err);
   }
 
   return res.status(200).json({
-    data: { items }
+    data: { items: rows }
   });
 });
 
 router.post("/", async (req, res, next) => {
   const { text, date } = req.body;
   const { userId } = req.session;
+  const db = req.app.get("db");
 
   if (!text || !date) {
     return res.status(400).json(error.BadRequest);
   }
 
   let err = null;
-  let r = new Reminder({ userId, text, date });
-  r = await r.save().catch(e => err = e);
+  const r = await db.execute(
+    "insert into reminder (user_id, message, date) values (?, ?, ?)",
+    [userId, text, date]
+  ).catch(e => err = e);
 
   if (err) {
-    if (err instanceof mongoose.Error.ValidationError) {
-      return res.status(400).json(error.BadRequest);
-    }
     return next(err);
   }
 
   // @TODO(art): schedule reminder
 
-  return res.status(201).json({ data: r });
+  return res.status(201).json({
+    data: {
+      id: r.insertId,
+      user_id: userId,
+      message: text,
+      date
+    }
+  });
 });
 
 router.put("/:id", findReminder, async (req, res, next) => {
   const { text, date } = req.body;
+  const db = req.app.get("db");
 
   if (!text || !date) {
     return res.status(400).json(error.BadRequest);
   }
 
-  let { reminder: r } = req;
-
-  r.text = text;
-  r.date = date;
-
   let err = null;
-  r = await r.save().catch(e => err = e);
+  await db.execute(
+    "update reminder set message = ?, date = ? where id = ?",
+    [text, date, req.reminder.id]
+  ).catch(e => err = e);
 
   if (err) {
-    if (err instanceof mongoose.Error.ValidationError) {
-      return res.status(400).json(error.BadRequest);
-    }
     return next(err);
   }
 
   // @TODO(art): re-schedule reminder
 
-  return res.status(200).json({ data: r });
+  return res.status(200).json({
+    data: {
+      ...req.reminder,
+      message: text,
+      date
+    }
+  });
 });
 
 router.delete("/:id", findReminder, async (req, res, next) => {
   let { reminder: r } = req;
+  const db = req.app.get("db");
 
   let err = null;
-  r = await r.remove().catch(e => err = e);
+  await db.execute("delete from reminder where id = ?", [r.id])
+    .catch(e => err = e);
 
   if (err) {
     return next(err);
@@ -114,24 +108,26 @@ router.get("/:id", findReminder, async (req, res, next) => {
 async function findReminder(req, res, next) {
   const { id } = req.params;
   const { userId } = req.session;
+  const db = req.app.get("db");
 
   let err = null;
-  const r = await Reminder.findById(id).catch(e => err = e);
+  const [rows] = await db.execute("select * from reminder where id = ?", [id])
+    .catch(e => err = e);
 
   if (err) {
     return next(err);
   }
 
-  if (!r) {
+  if (!rows.length) {
     return res.status(400).json(error.BadRequest);
   }
 
-  if (r.userId !== userId) {
+  const r = rows[0];
+
+  if (r.user_id !== userId) {
     return res.status(403).json(error.Forbidden);
   }
 
   req.reminder = r;
   return next();
 }
-
-export { Reminder, router };
