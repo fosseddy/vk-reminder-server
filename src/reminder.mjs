@@ -10,7 +10,7 @@ router.get("/", async (req, res, next) => {
   const db = req.app.get("db");
 
   let err = null;
-  const [rows] = await db.execute(
+  let query = await db.execute(
     "select * from reminder where user_id = ?",
     [userId]
   ).catch(e => err = e);
@@ -20,7 +20,7 @@ router.get("/", async (req, res, next) => {
   }
 
   return res.status(200).json({
-    data: { items: rows }
+    data: { items: query[0] }
   });
 });
 
@@ -34,7 +34,7 @@ router.post("/", async (req, res, next) => {
   }
 
   let err = null;
-  let r = await db.execute(
+  const query = await db.execute(
     "insert into reminder (user_id, message, date) values (?, ?, ?)",
     [userId, text, date]
   ).catch(e => err = e);
@@ -44,14 +44,13 @@ router.post("/", async (req, res, next) => {
   }
 
   const newReminder = {
-    id: r[0].insertId,
+    id: query[0].insertId,
     user_id: userId,
     message: text,
     date
   };
 
-  // @TODO(art): schedule reminder
-  r = await db.execute(
+  await db.execute(
     "insert into schedule (reminder_id, date) values (?, ?)",
     [newReminder.id, newReminder.date]
   ).catch(e => err = e);
@@ -81,7 +80,6 @@ router.put("/:id", findReminder, async (req, res, next) => {
     return next(err);
   }
 
-  // @TODO(art): re-schedule reminder
   await db.execute(
     "update schedule set date = ? where reminder_id = ?",
     [date, req.reminder.id]
@@ -133,19 +131,19 @@ async function findReminder(req, res, next) {
   const db = req.app.get("db");
 
   let err = null;
-  const [rows] = await db.execute("select * from reminder where id = ?", [id])
+  const query = await db.execute("select * from reminder where id = ?", [id])
     .catch(e => err = e);
 
   if (err) {
     return next(err);
   }
 
+  const rows = query[0];
   if (!rows.length) {
     return res.status(400).json(error.BadRequest);
   }
 
   const r = rows[0];
-
   if (r.user_id !== userId) {
     return res.status(403).json(error.Forbidden);
   }
