@@ -18,15 +18,23 @@ const conn = await mysql.createConnection({
   process.exit(1);
 });
 
+app.set("db", conn);
+
+app.use(cors());
+app.use(express.json());
+app.use(session);
+
+app.use("/api", messages.router);
+app.use("/api", reminder.router);
+
+app.use(error.globalHandler);
+
 setInterval(async () => {
   let err = null;
-  let query = await conn.execute("select * from schedule")
-    .catch(e => err = e);
+  let query = await conn.execute("select * from schedule").catch(e => err = e);
 
   if (err) {
-    // @TODO(art): handle error
-    console.error(err);
-    return;
+    return console.error(err);
   }
 
   let ids = [];
@@ -38,43 +46,33 @@ setInterval(async () => {
 
   if (!ids.length) return;
 
-  // @TODO(art): clean up naming
   ids = ids.join(",");
 
-  query = await conn.execute(
-    `select * from reminder where id in (${ids})`,
-  ).catch(e => err = e);
+  query = await conn.execute(`select * from reminder where id in (${ids})`)
+    .catch(e => err = e);
 
   if (err) {
-    // @TODO(art): handle error
-    console.error(err);
-    return;
+    return console.error(err);
   }
 
   // @TODO(art): send messages
-  // @TODO(art): mark reminder as done
   for (const r of query[0]) {
     console.log(r.id, ":", r.message);
   }
 
-  await conn.execute(
-    `delete from schedule where reminder_id in (${ids})`,
-  ).catch(e => err = e);
+  // @TODO(art): update and delete only succsessfully sent reminders
+  await conn.execute(`update reminder set is_done = 1 where id in (${ids})`)
+    .catch(e => err = e);
 
   if (err) {
-    // @TODO(art): handle error
-    console.error(err);
-    return;
+    return console.error(err);
+  }
+
+  await conn.execute(`delete from schedule where reminder_id in (${ids})`)
+    .catch(e => err = e);
+
+  if (err) {
+    return console.error(err);
   }
 }, 10000); // @TODO(art): move to constant?
 
-app.set("db", conn);
-
-app.use(cors());
-app.use(express.json());
-app.use(session);
-
-app.use("/api", messages.router);
-app.use("/api", reminder.router);
-
-app.use(error.globalHandler);
