@@ -34,7 +34,7 @@ router.post("/", async (req, res, next) => {
   }
 
   let err = null;
-  const r = await db.execute(
+  let r = await db.execute(
     "insert into reminder (user_id, message, date) values (?, ?, ?)",
     [userId, text, date]
   ).catch(e => err = e);
@@ -43,16 +43,24 @@ router.post("/", async (req, res, next) => {
     return next(err);
   }
 
-  // @TODO(art): schedule reminder
+  const newReminder = {
+    id: r[0].insertId,
+    user_id: userId,
+    message: text,
+    date
+  };
 
-  return res.status(201).json({
-    data: {
-      id: r.insertId,
-      user_id: userId,
-      message: text,
-      date
-    }
-  });
+  // @TODO(art): schedule reminder
+  r = await db.execute(
+    "insert into schedule (reminder_id, date) values (?, ?)",
+    [newReminder.id, newReminder.date]
+  ).catch(e => err = e);
+
+  if (err) {
+    return next(err);
+  }
+
+  return res.status(201).json({ data: newReminder });
 });
 
 router.put("/:id", findReminder, async (req, res, next) => {
@@ -74,6 +82,14 @@ router.put("/:id", findReminder, async (req, res, next) => {
   }
 
   // @TODO(art): re-schedule reminder
+  await db.execute(
+    "update schedule set date = ? where reminder_id = ?",
+    [date, req.reminder.id]
+  ).catch(e => err = e );
+
+  if (err) {
+    return next(err);
+  }
 
   return res.status(200).json({
     data: {
@@ -97,6 +113,12 @@ router.delete("/:id", findReminder, async (req, res, next) => {
   }
 
   // @TODO(art): delete from schedule
+  await db.execute("delete from schedule where reminder_id = ?", [r.id])
+    .catch(e => err = e);
+
+  if (err) {
+    return next(err);
+  }
 
   return res.status(200).json({ data: r });
 });
