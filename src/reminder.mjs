@@ -23,14 +23,9 @@ router.get("/", async (req, res, next) => {
   });
 });
 
-router.post("/", async (req, res, next) => {
-  const { text, date } = req.body;
+router.post("/", validateBody, async (req, res, next) => {
+  const { message, date } = req.body;
   const { userId } = req.session;
-
-  // @TODO(art): check if date is less than current date
-  if (!text || !date) {
-    return res.status(400).json(error.BadRequest);
-  }
 
   const db = database.connection();
 
@@ -41,11 +36,8 @@ router.post("/", async (req, res, next) => {
     return next(err);
   }
 
-  const insertId = await Reminder.create({
-    user_id: userId,
-    message: text,
-    date
-  }).catch(e => err = e);;
+  const insertId = await Reminder.create({ user_id: userId, message, date })
+    .catch(e => err = e);;
 
   if (err) {
     await db.rollback();
@@ -70,20 +62,14 @@ router.post("/", async (req, res, next) => {
     data: {
       id: insertId,
       user_id: userId,
-      message: text,
+      message,
       date
     }
   });
 });
 
-router.put("/:id", findReminder, async (req, res, next) => {
-  const { text, date } = req.body;
-
-  // @TODO(art): check if date is less than current date
-  if (!text || !date) {
-    return res.status(400).json(error.BadRequest);
-  }
-
+router.put("/:id", [validateBody, findReminder], async (req, res, next) => {
+  const { message, date } = req.body;
   const db = database.connection();
 
   let err = null;
@@ -93,7 +79,7 @@ router.put("/:id", findReminder, async (req, res, next) => {
     return next(err);
   }
 
-  await Reminder.updateBy("id", req.reminder.id, { message: text, date })
+  await Reminder.updateBy("id", req.reminder.id, { message, date })
     .catch(e => err = e);
 
   if (err) {
@@ -119,7 +105,7 @@ router.put("/:id", findReminder, async (req, res, next) => {
   return res.status(200).json({
     data: {
       ...req.reminder,
-      message: text,
+      message,
       date
     }
   });
@@ -186,5 +172,25 @@ async function findReminder(req, res, next) {
   }
 
   req.reminder = r;
+  return next();
+}
+
+function validateBody(req, res, next) {
+  const { message, date } = req.body;
+
+  if (!message || !date) {
+    return res.status(400).json(error.BadRequest);
+  }
+
+  const time = new Date(date).getTime();
+
+  if (isNaN(time)) {
+    return res.status(400).json(error.BadRequest);
+  }
+
+  if (Date.now() >= time) {
+    return res.status(400).json(error.BadRequest);
+  }
+
   return next();
 }
