@@ -35,7 +35,7 @@ export function watch() {
       const data = await messages.send(r).catch(e => err = e);
       if (err || data.error) {
         console.error("reminder:", r);
-        console.error(err);
+        console.error(err, data.error);
       }
     }
 
