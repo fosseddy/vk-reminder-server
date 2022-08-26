@@ -1,10 +1,9 @@
 import express from "express";
 import * as error from "#src/error.mjs";
-import * as database from "#src/database.mjs";
+import { Model } from "#src/database.mjs";
+import { Schedule } from "#src/schedule.mjs";
 
-export const Reminder = new database.Model("reminder");
-const Schedule = new database.Model("schedule");
-
+export const Reminder = new Model("reminder");
 export const router = express.Router();
 
 router.use("/reminder", router);
