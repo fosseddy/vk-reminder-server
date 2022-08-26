@@ -1,37 +1,31 @@
-import { Model } from "#src/database.mjs";
 import { Reminder } from "#src/reminder.mjs";
+import * as database from "#src/database.mjs";
 import * as messages from "#src/messages.mjs";
 
 const WATCH_DELAY = 10_000;
 
-export const Schedule = new Model("schedule");
+export const Schedule = new database.Model("schedule");
 
-// @TODO(art): think about what should happen when there is an error
 export function watch() {
   return setInterval(async () => {
     let err = null;
     let rows = await Schedule.findAll().catch(e => err = e);
+
     if (err) {
       return console.error(err);
     }
 
-    console.log("schedule:", rows);
-
-    let ids = [];
+    const ids = [];
     for (const r of rows) {
       if (Date.now() >= new Date(r.date).getTime()) {
         ids.push(r.reminder_id);
       }
     }
 
-    console.log("reminders to send:", ids);
+    if (!ids.length) return;
 
-    if (!ids.length) {
-      return console.log("--------------------------------------------------");
-    }
-
-    err = null;
     rows = await Reminder.findInBy("id", ids).catch(e => err = e);
+
     if (err) {
       return console.error(err);
     }
@@ -45,15 +39,29 @@ export function watch() {
       }
     }
 
-    err = null;
-    await Reminder.updateInBy("id", ids, { is_done: 1 }).catch(e => err = e);
+    const db = database.connection();
+    await db.beginTransaction().catch(e => err = e);
+
     if (err) {
       return console.error(err);
     }
 
-    err = null;
-    await Schedule.deleteInBy("reminder_id", ids).catch(e => err = e);
+    let err1 = null;
+    let err2 = null;
+    await Promise.all([
+      Reminder.updateInBy("id", ids, { is_done: 1 }),
+      Schedule.deleteInBy("reminder_id", ids)
+    ]).catch(errors => [err1, err2] = errors);
+
+    if (err1 || err2) {
+      await db.rollback();
+      return console.error(err1, err2);
+    }
+
+    await db.commit().catch(e => err = e);
+
     if (err) {
+      await db.rollback();
       return console.error(err);
     }
 

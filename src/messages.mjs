@@ -22,7 +22,6 @@ router.get("/check", async (req, res, next) => {
     return next(err);
   }
 
-  err = null;
   const data = await r.json().catch(e => err = e);
 
   if (err) {
@@ -40,10 +39,8 @@ router.get("/check", async (req, res, next) => {
 
 export async function send(reminder) {
   const { user_id, message } = reminder;
-  const range = 2 ** 32 / 2;
-  const min = -range;
-  const max = range - 1;
-  const randomId = Math.floor(Math.random() * (max - min + 1) + min);
+  const randomId = getRandomInt32();
+
   const res = await fetch(
     "https://api.vk.com/method/messages.send?" +
     `random_id=${randomId}&` +
@@ -54,4 +51,11 @@ export async function send(reminder) {
   );
 
   return res.json();
+}
+
+function getRandomInt32() {
+  const range = 2 ** 32 / 2;
+  const min = -range;
+  const max = range - 1;
+  return Math.floor(Math.random() * (max - min + 1) + min);
 }
