@@ -64,7 +64,5 @@ export function watch() {
       await db.rollback();
       return console.error(err);
     }
-
-    console.log("--------------------------------------------------");
   }, WATCH_DELAY);
 }
