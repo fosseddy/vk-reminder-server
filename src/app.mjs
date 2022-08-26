@@ -29,6 +29,8 @@ setInterval(async () => {
     return console.error(err);
   }
 
+  console.log("rows", query[0]);
+
   let ids = [];
   for (const r of query[0]) {
     if (Date.now() >= new Date(r.date).getTime()) {
@@ -36,18 +38,23 @@ setInterval(async () => {
     }
   }
 
+  console.log("ids", ids);
+
+  console.log("------------------------------------------------------");
   if (!ids.length) return;
 
-  ids = ids.join(",");
+  //ids = ids.join(",");
 
-  query = await conn.execute(`select * from reminder where id in (${ids})`)
-    .catch(e => err = e);
+  //query = await conn.execute(`select * from reminder where id in (${ids})`)
+  //  .catch(e => err = e);
+
+  const rows = await reminder.Reminder.findInBy("id", ids).catch(e => err = e);
 
   if (err) {
     return console.error(err);
   }
 
-  for (const r of query[0]) {
+  for (const r of rows) {
     let err = null;
     const data = await messages.send(r).catch(e => err = e);
     if (err || data.error) {
@@ -55,6 +62,8 @@ setInterval(async () => {
       console.error(err);
     }
   }
+
+  ids = ids.join(",");
 
   await conn.execute(`update reminder set is_done = 1 where id in (${ids})`)
     .catch(e => err = e);
@@ -69,5 +78,7 @@ setInterval(async () => {
   if (err) {
     return console.error(err);
   }
+
+  console.log("------------------------------------------------------");
 }, 10000); // @TODO(art): move to constant?
 

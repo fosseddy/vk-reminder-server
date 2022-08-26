@@ -1,5 +1,9 @@
 import express from "express";
 import * as error from "#src/error.mjs";
+import * as database from "#src/database.mjs";
+
+export const Reminder = new database.Model("reminder");
+const Schedule = new database.Model("schedule");
 
 export const router = express.Router();
 
@@ -7,83 +11,74 @@ router.use("/reminder", router);
 
 router.get("/", async (req, res, next) => {
   const { userId } = req.session;
-  const db = req.app.get("db");
 
   let err = null;
-  let query = await db.execute(
-    "select * from reminder where user_id = ?",
-    [userId]
-  ).catch(e => err = e);
+  const rows = await Reminder.findBy("user_id", userId).catch(e => err = e);
 
   if (err) {
     return next(err);
   }
 
   return res.status(200).json({
-    data: { items: query[0] }
+    data: { items: rows }
   });
 });
 
 router.post("/", async (req, res, next) => {
   const { text, date } = req.body;
   const { userId } = req.session;
-  const db = req.app.get("db");
 
+  // @TODO(art): check if date is less than current date
   if (!text || !date) {
     return res.status(400).json(error.BadRequest);
   }
 
   let err = null;
-  const query = await db.execute(
-    "insert into reminder (user_id, message, date) values (?, ?, ?)",
-    [userId, text, date]
-  ).catch(e => err = e);
-
-  if (err) {
-    return next(err);
-  }
-
-  const newReminder = {
-    id: query[0].insertId,
+  const insertId = await Reminder.create({
     user_id: userId,
     message: text,
     date
-  };
-
-  await db.execute(
-    "insert into schedule (reminder_id, date) values (?, ?)",
-    [newReminder.id, newReminder.date]
-  ).catch(e => err = e);
+  }).catch(e => err = e);;
 
   if (err) {
     return next(err);
   }
 
-  return res.status(201).json({ data: newReminder });
+  await Schedule.create({ reminder_id: insertId, date }).catch(e => err = e);
+
+  if (err) {
+    return next(err);
+  }
+
+  return res.status(201).json({
+    data: {
+      id: insertId,
+      user_id: userId,
+      message: text,
+      date
+    }
+  });
 });
 
 router.put("/:id", findReminder, async (req, res, next) => {
   const { text, date } = req.body;
   const db = req.app.get("db");
 
+  // @TODO(art): check if date is less than current date
   if (!text || !date) {
     return res.status(400).json(error.BadRequest);
   }
 
   let err = null;
-  await db.execute(
-    "update reminder set message = ?, date = ? where id = ?",
-    [text, date, req.reminder.id]
-  ).catch(e => err = e);
+  await Reminder.updateBy("id", req.reminder.id, { message: text, date })
+    .catch(e => err = e);
 
   if (err) {
     return next(err);
   }
 
-  await db.execute(
-    "update schedule set date = ? where reminder_id = ?",
-    [date, req.reminder.id]
-  ).catch(e => err = e );
+  await Schedule.updateBy("reminder_id", req.reminder.id, { date })
+    .catch(e => err = e);
 
   if (err) {
     return next(err);
@@ -103,16 +98,13 @@ router.delete("/:id", findReminder, async (req, res, next) => {
   const db = req.app.get("db");
 
   let err = null;
-  await db.execute("delete from reminder where id = ?", [r.id])
-    .catch(e => err = e);
+  await Reminder.deleteBy("id", r.id).catch(e => err = e);
 
   if (err) {
     return next(err);
   }
 
-  // @TODO(art): delete from schedule
-  await db.execute("delete from schedule where reminder_id = ?", [r.id])
-    .catch(e => err = e);
+  await Schedule.deleteBy("reminder_id", r.id).catch(e => err = e);
 
   if (err) {
     return next(err);
@@ -128,17 +120,14 @@ router.get("/:id", findReminder, async (req, res, next) => {
 async function findReminder(req, res, next) {
   const { id } = req.params;
   const { userId } = req.session;
-  const db = req.app.get("db");
 
   let err = null;
-  const query = await db.execute("select * from reminder where id = ?", [id])
-    .catch(e => err = e);
+  const rows = await Reminder.findBy("id", id).catch(e => err = e);
 
   if (err) {
     return next(err);
   }
 
-  const rows = query[0];
   if (!rows.length) {
     return res.status(400).json(error.BadRequest);
   }
