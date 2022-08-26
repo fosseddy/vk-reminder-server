@@ -37,3 +37,21 @@ router.get("/check", async (req, res, next) => {
     data: { allowed: !!data.response.is_allowed }
   });
 });
+
+export async function send(reminder) {
+  const { user_id, message } = reminder;
+  const range = 2 ** 32 / 2;
+  const min = -range;
+  const max = range - 1;
+  const randomId = Math.floor(Math.random() * (max - min + 1) + min);
+  const res = await fetch(
+    "https://api.vk.com/method/messages.send?" +
+    `random_id=${randomId}&` +
+    `user_id=${user_id}&` +
+    `message=${message}&` +
+    `access_token=${process.env.VK_TOKEN}&` +
+    `v=${process.env.VK_API_VER}`
+  );
+
+  return res.json();
+}
