@@ -3,8 +3,8 @@ import fetch from "node-fetch";
 import * as error from "./error";
 import { Reminder } from "./reminder";
 
-type JSONResponse = {
-    response: number;
+type JSONResponse<T> = {
+    response: T;
     error?: unknown;
 }
 
@@ -25,12 +25,7 @@ router.get("/check", async (req: Request, res: Response,
             `v=${process.env.VK_API_VER}`
         );
 
-        type Data = {
-            response: { is_allowed: number; };
-            error: unknown;
-        }
-
-        const data = await r.json() as Data;
+        const data = await r.json() as JSONResponse<{ is_allowed: number; }>;
         if (data.error) {
             res.status(400).json(error.BadRequest);
             return;
@@ -44,7 +39,7 @@ router.get("/check", async (req: Request, res: Response,
     }
 });
 
-export async function send(r: Reminder): Promise<JSONResponse> {
+export async function send(r: Reminder): Promise<JSONResponse<number>> {
     const { user_id, message } = r;
     const randomId = getRandomInt32();
 
