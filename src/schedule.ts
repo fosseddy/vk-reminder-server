@@ -8,7 +8,9 @@ export function watch(db: mysql.Connection): NodeJS.Timer {
     return setInterval(async () => {
         console.log("checking reminders");
         try {
-            const query = await db.execute("SELECT * FROM reminder");
+            const query = await db.execute(
+                "SELECT * FROM reminder WHERE is_done = 0"
+            );
             let reminders = query[0] as Reminder[];
             console.log("all", reminders);
 
@@ -30,8 +32,7 @@ export function watch(db: mysql.Connection): NodeJS.Timer {
             console.log("successfully sent", successIds);
 
             const placeholders = successIds.map(_ => "?").join(",");
-            await db.execute(
-                "UPDATE reminder SET is_done = 1" +
+            await db.execute( "UPDATE reminder SET is_done = 1 " +
                 `WHERE id IN (${placeholders})`,
                 successIds
             );
