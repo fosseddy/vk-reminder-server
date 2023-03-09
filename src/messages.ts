@@ -1,21 +1,19 @@
 import express, { Request, Response, NextFunction } from "express";
 import fetch from "node-fetch";
-import * as error from "./error";
 import { Reminder } from "./reminder";
 
-type JSONResponse<T> = {
+type VKResponse<T> = {
     response: T;
-    error?: unknown;
+    error?: { error_msg: string };
 }
 
 export const router = express.Router();
-
 router.use("/messages", router);
+router.get("/check", checkMessages);
 
-router.get("/check", async (req: Request, res: Response,
-                            next: NextFunction): Promise<void> => {
+async function checkMessages(req: Request, res: Response,
+                             next: NextFunction): Promise<void> {
     const { userId } = req.session;
-
     try {
         const r = await fetch(
             "https://api.vk.com/method/messages.isMessagesFromGroupAllowed?" +
@@ -25,9 +23,11 @@ router.get("/check", async (req: Request, res: Response,
             `v=${process.env.VK_API_VER}`
         );
 
-        const data = await r.json() as JSONResponse<{ is_allowed: number; }>;
+        const data = await r.json() as VKResponse<{ is_allowed: number }>;
         if (data.error) {
-            res.status(400).json(error.BadRequest);
+            res.status(400).json({
+                error: { message: data.error.error_msg }
+            });
             return;
         }
 
@@ -37,9 +37,9 @@ router.get("/check", async (req: Request, res: Response,
     } catch(err) {
         next(err);
     }
-});
+}
 
-export async function send(r: Reminder): Promise<JSONResponse<number>> {
+export async function send(r: Reminder): Promise<VKResponse<number>> {
     const { user_id, message } = r;
     const randomId = getRandomInt32();
 
