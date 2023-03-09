@@ -12,9 +12,7 @@ export function watch(db: mysql.Connection): NodeJS.Timer {
             );
             let reminders = query[0] as Reminder[];
 
-            reminders = reminders.filter(it =>
-                Date.now() >= new Date(it.date).getTime()
-            );
+            reminders = reminders.filter(it => Date.now() >= it.date);
             if (!reminders.length) return;
 
             await Promise.all(

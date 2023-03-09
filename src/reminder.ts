@@ -6,12 +6,12 @@ export type Reminder = {
     id: number;
     user_id: string;
     message: string;
-    date: string;
+    date: number;
 }
 
 type RequestBody = {
     message?: string;
-    date?: string;
+    date?: number;
 }
 
 export const router = express.Router();
@@ -98,20 +98,17 @@ async function queryOne(req: Request, res: Response): Promise<void> {
 function validateBody(req: Request, res: Response, next: NextFunction): void {
     const { message, date } = req.body as RequestBody;
 
-
     if (!message || !date) {
         res.status(400).json(errors.create("message and date are required"));
         return;
     }
 
-    const time = new Date(date).getTime();
-
-    if (isNaN(time)) {
-        res.status(400).json(errors.create(`invalid date value: ${date}`));
+    if (typeof date !== "number") {
+        res.status(400).json(errors.create("date must be a number"));
         return;
     }
 
-    if (Date.now() >= time) {
+    if (Date.now() >= date) {
         res.status(400).json(errors.create("date has already passed"));
         return;
     }
