@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { Request, Response, NextFunction } from "express";
-import * as error from "./error";
+import * as errors from "./errors";
 
 export type Session = {
     [index: string]: string;
@@ -55,14 +55,14 @@ export function session(req: Request, res: Response,
     const header = req.get("VK-Session");
 
     if (!header) {
-        res.status(401).json(error.NotAuthorized);
+        res.status(401).json(errors.create("session header is required"));
         return;
     }
 
     const sess = parseHeader(header);
 
     if (!isValid(sess)) {
-        res.status(401).json(error.NotAuthorized);
+        res.status(401).json(errors.create("session header is invalid"));
         return;
     }
 

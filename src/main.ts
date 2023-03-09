@@ -3,7 +3,7 @@ import mysql from "mysql2/promise";
 import express from "express";
 import cors from "cors";
 import { session } from "./vk-session";
-import * as error from "./error";
+import * as errors from "./errors";
 import * as messages from "./messages";
 import * as reminder from "./reminder";
 import * as schedule from "./schedule";
@@ -13,7 +13,7 @@ function loadenv(): void {
     for (const line of content.trim().split("\n")) {
         let [k, v] = line.split("=");
         if (!k || !v) {
-            console.warn(`key or value missing on line: ${line}`);
+            console.log(`key or value missing on line: ${line}`);
             continue;
         }
         process.env[k] = v;
@@ -45,12 +45,12 @@ async function main(): Promise<void> {
     app.use("/api", messages.router);
     app.use("/api", reminder.router);
 
-    app.use(error.globalHandler);
+    app.use(errors.globalHandler);
 
     schedule.watch(db);
 
     const port = process.env.PORT;
-    app.listen(port, () => console.log(`Server is listening on port: ${port}`));
+    app.listen(port, () => console.log("Server is listening on port:", port));
 }
 
 main().catch(err => {
