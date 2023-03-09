@@ -12,25 +12,23 @@ export function watch(db: mysql.Connection): NodeJS.Timer {
             );
             let reminders = query[0] as Reminder[];
 
-            reminders = reminders.filter(
-                it => Date.now() >= new Date(it.date).getTime()
+            reminders = reminders.filter(it =>
+                Date.now() >= new Date(it.date).getTime()
             );
             if (!reminders.length) return;
 
-            const successIds: number[] = [];
-            for (const r of reminders) {
-                const res = await messages.send(r);
-                if (res.error) {
-                    console.error("send vk message", r, res.error);
-                } else {
-                    successIds.push(r.id);
-                }
-            }
-
-            const params = successIds.map(_ => "?").join(",");
-            await db.execute(
-                `UPDATE reminder SET is_done = 1 WHERE id IN (${params})`,
-                successIds
+            await Promise.all(
+                reminders.map(async it => {
+                    const res = await messages.send(it);
+                    if (res.error) {
+                        console.error("send vk message", it, res.error);
+                        return;
+                    }
+                    await db.execute(
+                        "UPDATE reminder SET is_done = 1 WHERE id = ?",
+                        [it.id]
+                    );
+                })
             );
         } catch(err) {
             console.error(err);

@@ -60,7 +60,7 @@ async function create(req: Request, res: Response,
 }
 
 async function update(req: Request, res: Response,
-                         next: NextFunction): Promise<void> {
+                      next: NextFunction): Promise<void> {
     const { message, date } = req.body as RequestBody;
     const reminder = req.reminder!;
     const db: mysql.Connection = req.app.get("database");
@@ -79,7 +79,7 @@ async function update(req: Request, res: Response,
 }
 
 async function remove(req: Request, res: Response,
-                         next: NextFunction): Promise<void> {
+                      next: NextFunction): Promise<void> {
     const r = req.reminder!;
     const db: mysql.Connection = req.app.get("database");
     try {
