@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import fetch from "node-fetch";
 import { Reminder } from "./reminder";
+import * as errors from "./errors";
 
 type VKResponse<T> = {
     response: T;
@@ -25,9 +26,7 @@ async function checkMessages(req: Request, res: Response,
 
         const data = await r.json() as VKResponse<{ is_allowed: number }>;
         if (data.error) {
-            res.status(400).json({
-                error: { message: data.error.error_msg }
-            });
+            res.status(400).json(errors.create(data.error.error_msg))
             return;
         }
 
