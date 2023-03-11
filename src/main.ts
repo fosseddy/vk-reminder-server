@@ -22,10 +22,10 @@ function loadenv(): void {
 
 async function initDatabase(): Promise<mysql.Connection> {
     const conn = await mysql.createConnection({
-        host: process.env.DB_HOST!,
-        database: process.env.DB_NAME!,
-        user: process.env.DB_USER!,
-        password: process.env.DB_PASS!
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASS
     });
 
     await conn.ping();
